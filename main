@@ -586,7 +586,7 @@ local function createAndStartDungeon()
         }
     }
     bridge:FireServer(unpack(args1))
-    task.wait(1)
+    task.wait(0.5)
 
     -- Tạo dungeon
     local args2 = {
@@ -649,7 +649,7 @@ if settings["AutoAddRune"] then
 end
 
     -- ⏳ Bắt đầu dungeon sau 0.5s
-    task.wait(2)
+    task.wait(3)
 
     local args3 = {
         [1] = {
