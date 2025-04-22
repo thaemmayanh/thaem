@@ -600,6 +600,7 @@ local function createAndStartDungeon()
     }
     bridge:FireServer(unpack(args2))
 
+    task.wait(0.5)
     -- ⚡️ Auto Add Rune nếu bật
 if settings["AutoAddRune"] then
     local runeDisplayNames = {
