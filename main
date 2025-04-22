@@ -1150,7 +1150,7 @@ MiscTab:CreateToggle({
 
         if val then
             queue_on_teleport([[
-                loadstring(game:HttpGet('https://raw.githubusercontent.com/skyemngu13/hee/refs/heads/main/Mainv2'))()
+                loadstring(game:HttpGet('https://raw.githubusercontent.com/thaemmayanh/thaem/refs/heads/main/main'))()
             ]])
         end
     end
