@@ -1,8 +1,6 @@
-repeat
-    task.wait()
-until
-    game:IsLoaded()
-    and pcall(function() return game:GetService("CoreGui"):FindFirstChildWhichIsA("ScreenGui", true) or true end)
+repeat task.wait() until game:IsLoaded() and pcall(function()
+    return game:GetService("CoreGui"):FindFirstChildWhichIsA("ScreenGui", true) or true
+end)
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -10,61 +8,39 @@ local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 
 local keyFile = "piahub_key.txt"
-local apiUrl = "https://api-1m3m.onrender.com/check"
+local firebaseBaseUrl = "https://keymanager-8edb6-default-rtdb.firebaseio.com/keys" -- sửa đúng URL Firebase
 
--- Tự check key nếu đã lưu
+-- 🧠 Nếu đã lưu key, tự check luôn
 if isfile(keyFile) then
     local savedKey = readfile(keyFile)
-    local success, response = pcall(function()
-        return request({
-            Url = apiUrl,
-            Method = "POST",
-            Headers = {
-                ["Content-Type"] = "application/json"
-            },
-            Body = HttpService:JSONEncode({
-                key = savedKey,
-                hwid = tostring(game:GetService("RbxAnalyticsService"):GetClientId()),
-                discord_id = "123456"
-            })
-        })
-    end)
+    local response = request({
+        Url = firebaseBaseUrl .. "/" .. savedKey .. ".json",
+        Method = "GET"
+    })
 
-    if success then
-        local data = HttpService:JSONDecode(response.Body)
-        if data.success then
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/skyemngu13/hee/refs/heads/main/Mainv2"))()
-            return
-        end
+    local data = HttpService:JSONDecode(response.Body or "{}")
+    if data and data.hwid == tostring(game:GetService("RbxAnalyticsService"):GetClientId()) then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/thaemmayanh/thaem/refs/heads/main/main"))()
+        return
     end
 end
 
 pcall(function() CoreGui:FindFirstChild("GetKeyUI"):Destroy() end)
 
+-- 🔧 UI Setup
 local gui = Instance.new("ScreenGui", CoreGui)
 gui.Name = "GetKeyUI"
 gui.ResetOnSpawn = false
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 350, 0, 200)
-frame.Position = UDim2.new(0.5, -175, 0.5, -100)
+frame.Size = UDim2.new(0, 350, 0, 220)
+frame.Position = UDim2.new(0.5, -175, 0.5, -110)
 frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 frame.BorderSizePixel = 0
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
 
-local closeBtn = Instance.new("TextButton", frame)
-closeBtn.Text = "X"
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 14
-closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-closeBtn.Size = UDim2.new(0, 30, 0, 30)
-closeBtn.Position = UDim2.new(1, -35, 0, 5)
-Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
-closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
-
 local title = Instance.new("TextLabel", frame)
-title.Text = "No key free, No get key"
+title.Text = "🔐 Nhập Key để truy cập"
 title.Font = Enum.Font.GothamBold
 title.TextSize = 20
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -73,7 +49,7 @@ title.Size = UDim2.new(1, 0, 0, 40)
 title.Position = UDim2.new(0, 0, 0, 10)
 
 local textbox = Instance.new("TextBox", frame)
-textbox.PlaceholderText = "Key Here!"
+textbox.PlaceholderText = "Key here!"
 textbox.Text = ""
 textbox.Font = Enum.Font.Gotham
 textbox.TextSize = 16
@@ -81,48 +57,8 @@ textbox.TextColor3 = Color3.fromRGB(255, 255, 255)
 textbox.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 textbox.Size = UDim2.new(0.8, 0, 0, 35)
 textbox.Position = UDim2.new(0.1, 0, 0, 60)
-textbox.BorderSizePixel = 0
 textbox.ClearTextOnFocus = false
 Instance.new("UICorner", textbox).CornerRadius = UDim.new(0, 6)
-
-local button = Instance.new("TextButton", frame)
-button.Text = "Check key"
-button.Font = Enum.Font.GothamBold
-button.TextSize = 16
-button.TextColor3 = Color3.fromRGB(255, 255, 255)
-button.BackgroundColor3 = Color3.fromRGB(50, 100, 255)
-button.Size = UDim2.new(0.5, 0, 0, 35)
-button.Position = UDim2.new(0.25, 0, 0, 110)
-Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
-
-local getKeyBtn = Instance.new("TextButton", frame)
-getKeyBtn.Text = "Lấy HWID"
-getKeyBtn.Font = Enum.Font.GothamBold
-getKeyBtn.TextSize = 14
-getKeyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-getKeyBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-getKeyBtn.Size = UDim2.new(0.5, -5, 0, 30)
-getKeyBtn.Position = UDim2.new(0.25, 0, 0, 150)
-Instance.new("UICorner", getKeyBtn).CornerRadius = UDim.new(0, 6)
-
-local discordBtn = Instance.new("TextButton", frame)
-discordBtn.Text = "Discord"
-discordBtn.Font = Enum.Font.GothamBold
-discordBtn.TextSize = 14
-discordBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-discordBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-discordBtn.Size = UDim2.new(0.25, 0, 0, 30)
-discordBtn.Position = UDim2.new(0.75, 5, 0, 150)
-Instance.new("UICorner", discordBtn).CornerRadius = UDim.new(0, 6)
-
-local discordLabel = Instance.new("TextLabel", frame)
-discordLabel.Text = "Buy Key"
-discordLabel.Font = Enum.Font.GothamBold
-discordLabel.TextSize = 14
-discordLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-discordLabel.BackgroundTransparency = 1
-discordLabel.Size = UDim2.new(0.25, 0, 0, 20)
-discordLabel.Position = UDim2.new(0.75, 5, 0, 130)
 
 local notify = Instance.new("TextLabel", frame)
 notify.Text = ""
@@ -133,51 +69,76 @@ notify.BackgroundTransparency = 1
 notify.Position = UDim2.new(0, 0, 1, -25)
 notify.Size = UDim2.new(1, 0, 0, 25)
 
--- Nút Lấy HWID
+local checkBtn = Instance.new("TextButton", frame)
+checkBtn.Text = "✅ Check Key"
+checkBtn.Font = Enum.Font.GothamBold
+checkBtn.TextSize = 16
+checkBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+checkBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
+checkBtn.Size = UDim2.new(0.5, 0, 0, 35)
+checkBtn.Position = UDim2.new(0.25, 0, 0, 110)
+Instance.new("UICorner", checkBtn).CornerRadius = UDim.new(0, 6)
+
+local getKeyBtn = Instance.new("TextButton", frame)
+getKeyBtn.Text = "📋 Copy HWID"
+getKeyBtn.Font = Enum.Font.GothamBold
+getKeyBtn.TextSize = 14
+getKeyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+getKeyBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+getKeyBtn.Size = UDim2.new(0.48, -2, 0, 30)
+getKeyBtn.Position = UDim2.new(0.02, 0, 0, 155)
+Instance.new("UICorner", getKeyBtn).CornerRadius = UDim.new(0, 6)
+
+local discordBtn = Instance.new("TextButton", frame)
+discordBtn.Text = "🔗 Discord"
+discordBtn.Font = Enum.Font.GothamBold
+discordBtn.TextSize = 14
+discordBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+discordBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+discordBtn.Size = UDim2.new(0.48, -2, 0, 30)
+discordBtn.Position = UDim2.new(0.5, 2, 0, 155)
+Instance.new("UICorner", discordBtn).CornerRadius = UDim.new(0, 6)
+
+-- 📋 Copy HWID
 getKeyBtn.MouseButton1Click:Connect(function()
     local hwid = tostring(game:GetService("RbxAnalyticsService"):GetClientId())
     setclipboard(hwid)
-    notify.Text = "Đã copy HWID của bạn!"
+    notify.Text = "✅ Đã copy HWID!"
     notify.TextColor3 = Color3.fromRGB(255, 255, 0)
 end)
 
--- Nút Discord
+-- 🔗 Copy Discord
 discordBtn.MouseButton1Click:Connect(function()
-    setclipboard("https://discord.gg/ZQNNpQ5P")
-    notify.Text = "Đã copy link Discord!"
+    setclipboard("https://discord.gg/ZQNNpQ5P") -- Sửa link nếu cần
+    notify.Text = "🔗 Đã copy link Discord!"
     notify.TextColor3 = Color3.fromRGB(100, 200, 255)
 end)
 
--- Nút Check Key
-button.MouseButton1Click:Connect(function()
+-- ✅ Check key
+checkBtn.MouseButton1Click:Connect(function()
     local input = textbox.Text
-    local cleaned = string.gsub(tostring(input), "%s+", "")
+    local cleanedKey = string.gsub(input, "%s+", "")
+    local hwid = tostring(game:GetService("RbxAnalyticsService"):GetClientId())
 
     local response = request({
-        Url = apiUrl,
-        Method = "POST",
-        Headers = {
-            ["Content-Type"] = "application/json"
-        },
-        Body = HttpService:JSONEncode({
-            key = cleaned,
-            hwid = tostring(game:GetService("RbxAnalyticsService"):GetClientId()),
-            discord_id = "123456"
-        })
+        Url = firebaseBaseUrl .. "/" .. cleanedKey .. ".json",
+        Method = "GET"
     })
 
-    local data = HttpService:JSONDecode(response.Body)
-    if data.success then
+    local data = HttpService:JSONDecode(response.Body or "{}")
+
+    if data and data.hwid == hwid then
         notify.TextColor3 = Color3.fromRGB(100, 255, 100)
-        notify.Text = data.message or "Key hợp lệ!"
-        writefile(keyFile, cleaned)
+        notify.Text = "✔️ Key hợp lệ!"
+        writefile(keyFile, cleanedKey)
         wait(1)
-        pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/thaemmayanh/thaem/refs/heads/main/main"))()
-            gui:Destroy()
-        end)
+        gui:Destroy()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/thaemmayanh/thaem/refs/heads/main/main"))()
+    elseif data and data.hwid then
+        notify.Text = "⚠️ Sai HWID!"
+        notify.TextColor3 = Color3.fromRGB(255, 150, 0)
     else
-        notify.TextColor3 = Color3.fromRGB(255, 100, 100)
-        notify.Text = data.message or "Key sai!"
+        notify.Text = "❌ Key không tồn tại!"
+        notify.TextColor3 = Color3.fromRGB(255, 50, 50)
     end
 end)
