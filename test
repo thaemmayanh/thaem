@@ -334,7 +334,7 @@ task.spawn(function()
         end)
         if not success then return end
 
-        local offset = direction * 5 + Vector3.new(0, 3, 0)
+        local offset = direction * 5 + Vector3.new(0, 0, 0)
         rootPart.CFrame = CFrame.new(pos + offset, pos)
     end
 
@@ -519,13 +519,28 @@ DungeonTab:CreateToggle({
 
 task.spawn(function()
     local TeleportService = game:GetService("TeleportService")
+    local Players = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
 
     while true do
         if settings["AutoBypassDungeonBlockTime"] and game.PlaceId ~= 87039211657390 then
             local curTime = os.date("*t")
+
             if curTime.min >= 45 and curTime.min <= 58 then
-                TeleportService:Teleport(87039211657390)
-                task.wait(60) -- đợi 1 phút để tránh spam
+                local isInCastle = false
+
+                pcall(function()
+                    local label = LocalPlayer.PlayerGui.Hud.UpContanier:FindFirstChild("Room")
+                    if label and typeof(label.Text) == "string" then
+                        -- Nếu match Floor: xx/xx thì đang ở Castle
+                        isInCastle = label.Text:match("Floor:%s*%d+/%d+") ~= nil
+                    end
+                end)
+
+                if not isInCastle then
+                    TeleportService:Teleport(87039211657390)
+                    task.wait(60) -- tránh spam
+                end
             end
         end
         task.wait(10)
@@ -1005,34 +1020,54 @@ task.spawn(function()
     local TeleportService = game:GetService("TeleportService")
     local LocalPlayer = Players.LocalPlayer
 
+    local lobbyPlaceId = 87039211657390
+
     while true do
-        -- 🔒 Chỉ chạy trong Castle
         if game.PlaceId == 128336380114944 and settings["AutoOutCastleFloor"] and tonumber(settings["AutoOutCastleFloor"]) then
             local castleFolder = workspace:FindFirstChild("__Main") and workspace.__Main:FindFirstChild("__Enemies")
-            local ui = LocalPlayer:FindFirstChild("PlayerGui") and LocalPlayer.PlayerGui:FindFirstChild("Hud")
-            local floorText = ui and ui:FindFirstChild("Room") and ui.Room:FindFirstChild("TextLabel")
-            local curFloor = floorText and tonumber(floorText.Text:match("%d+")) or 0
+            local curFloor = 0
 
-            if castleFolder and curFloor == tonumber(settings["AutoOutCastleFloor"]) then
-                local foundBoss = nil
+            -- Lấy số tầng hiện tại từ TextLabel tên Room
+            pcall(function()
+                local label = LocalPlayer.PlayerGui.Hud.UpContanier:FindFirstChild("Room")
+                if label and label:IsA("TextLabel") then
+                    local match = label.Text:match("Floor:%s*(%d+)/")
+                    if match then
+                        curFloor = tonumber(match)
+                    end
+                end
+            end)
 
+            local targetFloor = tonumber(settings["AutoOutCastleFloor"])
+
+            if castleFolder and curFloor == targetFloor then
+                local closestBoss = nil
+                local closestDist = math.huge
+
+                -- Tìm boss gần nhất có Scale >= 3.5
                 for _, uuid in ipairs(castleFolder:GetDescendants()) do
                     if uuid:IsA("Part") then
-                        local hp = uuid:GetAttribute("HP")
                         local scale = uuid:GetAttribute("Scale")
-                        if hp and scale and scale >= 3.5 then
-                            foundBoss = uuid
-                            break
+                        local isDead = uuid:GetAttribute("Dead")
+                        if scale and scale >= 3.5 and not isDead then
+                            local dist = (uuid.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+                            if dist < closestDist then
+                                closestBoss = uuid
+                                closestDist = dist
+                            end
                         end
                     end
                 end
 
-                if foundBoss then
-                    repeat task.wait(0.5)
-                    until (foundBoss:GetAttribute("HP") or 1) <= 0
+                if closestBoss then
+                    -- Đợi boss chết
+                    repeat
+                        task.wait(0.3)
+                    until closestBoss:GetAttribute("Dead") == true
 
+                    -- Teleport sau khi boss chết
                     task.wait(2)
-                    TeleportService:Teleport(87039211657390) -- về lobby
+                    TeleportService:Teleport(lobbyPlaceId)
                 end
             end
         end
