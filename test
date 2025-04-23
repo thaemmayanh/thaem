@@ -1104,6 +1104,7 @@ task.spawn(function()
 
 	local attackRange = 10
 	local lastAttackTime = 0
+	local lastUUID = nil
 
 	local function getClosestEnemy()
 		local closest = nil
@@ -1128,23 +1129,36 @@ task.spawn(function()
 	while true do
 		if autoAttackEnabled then
 			local target = getClosestEnemy()
-			if target and tick() - lastAttackTime >= 0.1 then
-				local args = {
-					[1] = {
+			if target then
+				local uuid = target.Name
+				local now = tick()
+
+				-- Nếu target mới → reset delay cho phép đánh ngay nếu đã đủ khoảng cách
+				if uuid ~= lastUUID then
+					lastUUID = uuid
+					lastAttackTime = now - 0.1 -- cho phép đánh ngay
+				end
+
+				if (target.Position - rootPart.Position).Magnitude <= attackRange and (now - lastAttackTime) >= 0.1 then
+					local args = {
 						[1] = {
-							["Event"] = "PunchAttack",
-							["Enemy"] = target.Name
-						},
-						[2] = "\4"
+							[1] = {
+								["Event"] = "PunchAttack",
+								["Enemy"] = uuid
+							},
+							[2] = "\4"
+						}
 					}
-				}
-				pcall(function()
-					dataRemoteEvent:FireServer(unpack(args))
-				end)
-				lastAttackTime = tick()
+					pcall(function()
+						dataRemoteEvent:FireServer(unpack(args))
+					end)
+					lastAttackTime = now
+				end
+			else
+				lastUUID = nil
 			end
 		end
-		task.wait() -- quét mỗi frame, không delay
+		task.wait() -- quét liên tục
 	end
 end)
 
