@@ -1095,51 +1095,57 @@ MiscTab:CreateToggle({
 })
 
 task.spawn(function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
-    local rootPart = player.Character and player.Character:FindFirstChild("HumanoidRootPart") or nil
-    local enemiesRoot = workspace:WaitForChild("__Main"):WaitForChild("__Enemies"):WaitForChild("Server")
-    local dataRemoteEvent = game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
+	local Players = game:GetService("Players")
+	local player = Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local rootPart = character:WaitForChild("HumanoidRootPart")
+	local enemies = workspace:WaitForChild("__Main"):WaitForChild("__Enemies"):WaitForChild("Server")
+	local dataRemoteEvent = game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
 
-    while true do
-        if settings["AutoAttack"] and rootPart then
-            local closest, minDist = nil, math.huge
+	local attackRange = 10
+	local lastAttackTime = 0
 
-            for _, part in ipairs(enemiesRoot:GetDescendants()) do
-                if part:IsA("Part") then
-                    local hp = part:GetAttribute("HP")
-                    if hp and hp > 0 then
-                        local dist = (part.Position - rootPart.Position).Magnitude
-                        if dist < minDist and dist <= 12 then -- tầm đánh
-                            minDist = dist
-                            closest = part
-                        end
-                    end
-                end
-            end
+	local function getClosestEnemy()
+		local closest = nil
+		local minDist = math.huge
 
-            if closest then
-                local uuid = closest.Name
+		for _, part in pairs(enemies:GetDescendants()) do
+			if part:IsA("Part") then
+				local hp = part:GetAttribute("HP")
+				if hp and hp > 0 then
+					local dist = (part.Position - rootPart.Position).Magnitude
+					if dist <= attackRange and dist < minDist then
+						minDist = dist
+						closest = part
+					end
+				end
+			end
+		end
 
-                while settings["AutoAttack"] and closest and closest:IsDescendantOf(workspace)
-                      and (closest:GetAttribute("HP") or 0) > 0 do
+		return closest
+	end
 
-                    dataRemoteEvent:FireServer({
-                        [1] = {
-                            [1] = {
-                                ["Event"] = "PunchAttack",
-                                ["Enemy"] = uuid
-                            },
-                            [2] = "\4"
-                        }
-                    })
-
-                    task.wait(0.1)
-                end
-            end
-        end
-        task.wait(0.05)
-    end
+	while true do
+		if autoAttackEnabled then
+			local target = getClosestEnemy()
+			if target and tick() - lastAttackTime >= 0.1 then
+				local args = {
+					[1] = {
+						[1] = {
+							["Event"] = "PunchAttack",
+							["Enemy"] = target.Name
+						},
+						[2] = "\4"
+					}
+				}
+				pcall(function()
+					dataRemoteEvent:FireServer(unpack(args))
+				end)
+				lastAttackTime = tick()
+			end
+		end
+		task.wait() -- quét mỗi frame, không delay
+	end
 end)
 
 MiscTab:CreateToggle({
