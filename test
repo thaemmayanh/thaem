@@ -339,9 +339,17 @@ task.spawn(function()
         local offset = direction * 2 + Vector3.new(0, 1, 0)
         local finalCFrame = CFrame.new(pos + offset, pos)
 
-        rootPart.Anchored = true
+        -- ✅ Ổn định nhưng không anchor
+        rootPart.Velocity = Vector3.zero
+        humanoid.AutoRotate = false
+        humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+
         rootPart.CFrame = finalCFrame
-        task.wait(0.01)
+
+        task.delay(0.1, function()
+            humanoid.AutoRotate = true
+            humanoid:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
+        end)
     end
 
     local function handleMob(model, part)
@@ -364,8 +372,6 @@ task.spawn(function()
             task.wait(0.1)
         end
 
-        -- Mob chết → thả neo → đợi delay
-        rootPart.Anchored = false
         task.wait(settings["FarmDelay"] or 0.1)
     end
 
@@ -386,7 +392,6 @@ task.spawn(function()
             end
         else
             disableNoClip()
-            rootPart.Anchored = false
             task.wait(0.1)
         end
     end
