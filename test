@@ -334,7 +334,7 @@ task.spawn(function()
         end)
         if not success then return end
 
-        local offset = direction * 5 + Vector3.new(0, 0, 0)
+        local offset = direction * 5 + Vector3.new(0, 1, 0)
         rootPart.CFrame = CFrame.new(pos + offset, pos)
     end
 
