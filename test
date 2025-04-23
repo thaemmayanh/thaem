@@ -74,7 +74,7 @@ local defaultSettings = {
     AriseModels = {"Jinwoo", "Pucci", "Freeza"},
     OnlyCastleParts = false,
     AutoCastleCustom = false,
-    CastleTargetFloor = "30",
+    AutoOutCastleFloor = 0,
     AutoBypassDungeon = false,
     AutoCheckDD = false,
     AutoClick = false,
@@ -85,7 +85,6 @@ local defaultSettings = {
     AutoHideUI = false,
     AutoSendPetFast = false,
     SelectedCheckpoint = "25",
-    BossOutFloor = 0,
     AutoAddRune = false,
     SelectedRuneName = "Black Clover",
     AutoLeaveDungeonEnd = false,
@@ -519,16 +518,17 @@ DungeonTab:CreateToggle({
 })
 
 task.spawn(function()
+    local TeleportService = game:GetService("TeleportService")
+
     while true do
-        if settings["AutoLeaveDungeonByTime"] and game.PlaceId ~= 87039211657390 then
+        if settings["AutoBypassDungeonBlockTime"] and game.PlaceId ~= 87039211657390 then
             local curTime = os.date("*t")
-            if curTime.min == 45 then
-                local TeleportService = game:GetService("TeleportService")
-                TeleportService:Teleport(87039211657390) -- ID lobby
-                task.wait(5)
+            if curTime.min >= 45 and curTime.min <= 58 then
+                TeleportService:Teleport(87039211657390)
+                task.wait(60) -- đợi 1 phút để tránh spam
             end
         end
-        task.wait(10) -- check mỗi 10s
+        task.wait(10)
     end
 end)
 
@@ -1217,44 +1217,6 @@ MiscTab:CreateToggle({
                 pcall(function()
                     loadstring(game:HttpGet("https://raw.githubusercontent.com/skyemngu13/hee/refs/heads/main/giamlag"))()
                 end)
-            end)
-        end
-    end
-})
-
--- 🪓 Toggle không lưu settings, chỉ test
-MiscTab:CreateToggle({
-    Name = "Anti kick (test)",
-    CurrentValue = false,
-    Flag = "TempAntiPlayer",
-    Callback = function(enabled)
-        if enabled then
-            task.spawn(function()
-                local Players = game:GetService("Players")
-                local LocalPlayer = Players.LocalPlayer
-                local MainPlayers = workspace:WaitForChild("__Main"):WaitForChild("__Players")
-
-                while Rayfield.Flags["TempAntiPlayer"].CurrentValue do
-                    -- Destroy other players in Players service
-                    for _, player in ipairs(Players:GetPlayers()) do
-                        if player ~= LocalPlayer then
-                            pcall(function()
-                                player:Destroy()
-                            end)
-                        end
-                    end
-
-                    -- Destroy player models in workspace.__Main.__Players
-                    for _, model in ipairs(MainPlayers:GetChildren()) do
-                        if model:IsA("Model") and model.Name ~= LocalPlayer.Name then
-                            pcall(function()
-                                model:Destroy()
-                            end)
-                        end
-                    end
-
-                    task.wait(1)
-                end
             end)
         end
     end
