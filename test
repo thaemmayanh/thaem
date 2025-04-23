@@ -1064,10 +1064,10 @@ task.spawn(function()
     repeat task.wait(1) until Player:GetAttribute("Loaded") == true
 
     while true do
-        task.wait(0.1)
+        task.wait(0.3)
         if autoClicking then
             if Player.leaderstats:FindFirstChild("Passes") and Player.leaderstats.Passes:GetAttribute("AutoClicker") ~= true then
-                task.wait(0.1)
+                task.wait(0.2)
             end
 
             if Player:GetAttribute("AutoClick") ~= true then
@@ -1102,11 +1102,10 @@ task.spawn(function()
 	local enemies = workspace:WaitForChild("__Main"):WaitForChild("__Enemies"):WaitForChild("Server")
 	local dataRemoteEvent = game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
 
-	local lastTarget = nil
-	local lastTargetTime = 0
 	local attackRange = 8
+	local attackDelay = 0.1 -- Hợp lý với cooldown game
 
-	local function getClosestEnemyInRange()
+	local function getClosestEnemy()
 		local closest = nil
 		local minDist = math.huge
 
@@ -1128,36 +1127,27 @@ task.spawn(function()
 
 	while true do
 		if autoAttackEnabled then
-			local target = getClosestEnemyInRange()
-
+			local target = getClosestEnemy()
 			if target then
-				-- Nếu là target mới → delay nhẹ trước khi đánh
-				if target ~= lastTarget then
-					lastTarget = target
-					lastTargetTime = tick()
-					task.wait(0.01) -- chờ vị trí ổn định sau TP
-				end
+				local hp = target:GetAttribute("HP")
+				local dist = (target.Position - rootPart.Position).Magnitude
 
-				-- Nếu vẫn trong phạm vi sau delay → tấn công
-				if (target.Position - rootPart.Position).Magnitude <= attackRange then
-					local args = {
-						[1] = {
-							[1] = {
-								["Event"] = "PunchAttack",
-								["Enemy"] = target.Name
-							},
-							[2] = "\4"
-						}
-					}
+				if hp and hp > 0 and dist <= attackRange then
 					pcall(function()
-						dataRemoteEvent:FireServer(unpack(args))
+						dataRemoteEvent:FireServer({
+							[1] = {
+								[1] = {
+									["Event"] = "PunchAttack",
+									["Enemy"] = target.Name
+								},
+								[2] = "\4"
+							}
+						})
 					end)
 				end
-			else
-				lastTarget = nil
 			end
 		end
-		task.wait(0.1)
+		task.wait(attackDelay)
 	end
 end)
 
