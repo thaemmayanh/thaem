@@ -204,7 +204,7 @@ MainTab:CreateToggle({
 
 MainTab:CreateDropdown({
     Name = "select mob",
-    Options = {"All", "Normal", "Big", "Đánh Boss trước"},
+    Options = {"All", "Normal", "Big", "big priority"},
     MultiSelection = true,
     CurrentOption = settings["FarmScales"],
     Flag = "FarmScales",
@@ -329,28 +329,30 @@ task.spawn(function()
     end
 
     local function teleportNearMob(pos)
-        if typeof(pos) ~= "Vector3" then return end
-        local dir = rootPart.Position - pos
-        if dir.Magnitude == 0 then return end
+    if typeof(pos) ~= "Vector3" then return end
+    local dir = rootPart.Position - pos
+    if dir.Magnitude == 0 then return end
 
-        local success, direction = pcall(function() return dir.Unit end)
-        if not success then return end
+    local success, direction = pcall(function() return dir.Unit end)
+    if not success then return end
 
-        local offset = direction * 2 + Vector3.new(0, 0, 0)
-        local finalCFrame = CFrame.new(pos + offset, pos)
+    local offset = direction * 2 + Vector3.new(0, 0, 0)
+    local finalCFrame = CFrame.new(pos + offset, pos)
 
-        -- ✅ Ổn định nhưng không anchor
-        rootPart.Velocity = Vector3.zero
-        humanoid.AutoRotate = false
-        humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+    local originalGravity = workspace.Gravity
+    workspace.Gravity = 0
 
-        rootPart.CFrame = finalCFrame
+    rootPart.Velocity = Vector3.zero
+    humanoid.AutoRotate = false
+    humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+    rootPart.CFrame = finalCFrame
 
-        task.delay(0.1, function()
-            humanoid.AutoRotate = true
-            humanoid:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
-        end)
-    end
+    task.delay(0.1, function()
+        workspace.Gravity = originalGravity
+        humanoid.AutoRotate = true
+        humanoid:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
+    end)
+end
 
     local function handleMob(model, part)
         if not part then return end
