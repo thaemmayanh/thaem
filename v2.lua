@@ -986,6 +986,8 @@ end)
 -- 📦 Section duy nhất bên trái tab Misc
 local MiscSection = Tabs.Misc:Section({ Side = "Left" })
 
+local autoClicking = false
+
 -- 🖱️ Toggle: AutoClick
 MiscSection:Toggle({
 	Name = "AutoClick",
@@ -996,6 +998,8 @@ MiscSection:Toggle({
 		saveSettings()
 	end
 }, "AutoClick")
+
+local autoAttackEnabled = settings["AutoAttack"]
 
 -- ⚔️ Toggle: Auto Attack
 MiscSection:Toggle({
