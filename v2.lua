@@ -1381,32 +1381,38 @@ task.spawn(function()
 	end)
 end)
 
--- 🔁 Khởi động lại các toggle đã bật trong settings
 task.delay(1, function()
-	local function reTrigger(flag)
-		local toggle = MacLib.Flags[flag]
-		if toggle and settings[flag] then
-			toggle:Set(false)
-			task.wait(0.05)
-			toggle:Set(true)
-		end
-	end
+    local function reTrigger(flag)
+        local toggle = MacLib.Flags[flag]
+        if toggle and settings[flag] then
+            toggle:Set(false)
+            task.wait(0.05)
+            toggle:Set(true)
+        end
+    end
 
-	local allFlags = {
-		"AutoClick",
-		"AutoAttack",
-		"AutoLoadScript",
-		"SpecialScript",
-		"BypassCooldown",
-		"AutoCastleCustom",
-		"AutoCheckDD",
-		"AutoCastleBossOut",
-		"AutoCastleBossFloor",
-	}
+    -- 📌 Danh sách Flag thật sự có Toggle tương ứng
+    local allFlags = {
+        "AutoClick",
+        "AutoAttack",
+        "AutoLoadScript",
+        "SpecialScript",
+        "AutoSendPetFast",
+        "AutoFarm",
+        "AutoDestroy",
+        "AutoHideUI",
+        "AutoCastleCustom",
+        "AutoCastleCheckpoint",
+        "AutoBypassDungeon",
+        "AutoCheckDD",
+        "AutoAddRune",
+        "AutoExchangeEnchant",
+        "AutoBypassDungeonBlockTime",
+    }
 
-	for _, flag in ipairs(allFlags) do
-		reTrigger(flag)
-	end
+    for _, flag in ipairs(allFlags) do
+        reTrigger(flag)
+    end
 end)
 
 -- 🖱️ Tạo nút ImageButton GUI mở UI
