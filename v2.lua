@@ -415,6 +415,7 @@ MainSection:Toggle({
 }, "AutoDestroy")
 
 -- 🧟‍♂️ Dropdown: Select Mob Arise (Multi Selection)
+-- Dropdown: Select Mob Arise
 local ariseDropdown = MainSection:Dropdown({
 	Name = "Select Mob Arise",
 	Options = {"JinWoo", "Pucci", "Metus", "Saitama", "Esil", "Baran", "Vulcan", "Kamish"},
@@ -426,13 +427,11 @@ local ariseDropdown = MainSection:Dropdown({
 	end
 }, "AriseModels")
 
--- 🛠 Force update chọn lại sau khi UI vẽ xong hẳn
-task.spawn(function()
-	repeat task.wait() until ariseDropdown
-	ariseDropdown:UpdateSelection(settings["AriseModels"] or {})
+-- 🛠 Force update lại sau GUI load
+task.delay(0.2, function()
+    ariseDropdown:UpdateSelection(settings["AriseModels"] or {})
 end)
 
---  Xử lý Auto Destroy/Arise
 -- Luồng xử lý AutoDestroy
 task.spawn(function()
     local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -854,7 +853,7 @@ local CastleSection = Tabs.Dungeon:Section({ Side = "Right" })
 CastleSection:Label({ Text = "Auto Castle" })
 
 -- 🔘 Toggle: Auto Castle Join
-local autoCastleJoinToggle = CastleSection:Toggle({
+CastleSection:Toggle({
 	Name = "Auto Castle Join",
 	Default = settings["AutoCastleCustom"],
 	Callback = function(val)
@@ -887,7 +886,7 @@ local autoCastleJoinToggle = CastleSection:Toggle({
 }, "AutoCastleCustom")
 
 -- 🔘 Toggle: Auto Castle Checkpoint
-local autoCastleCheckpointToggle = CastleSection:Toggle({
+CastleSection:Toggle({
 	Name = "Auto Castle Checkpoint",
 	Default = settings["AutoCastleCheckpoint"],
 	Callback = function(val)
@@ -922,20 +921,6 @@ local autoCastleCheckpointToggle = CastleSection:Toggle({
 		end
 	end
 }, "AutoCastleCheckpoint")
-
--- 🛠 Auto bật lại nếu đang lưu
-task.delay(0.5, function()
-	if settings["AutoCastleCustom"] and MacLib.Flags["AutoCastleCustom"] then
-		MacLib.Flags["AutoCastleCustom"]:Set(false)
-		task.wait(0.05)
-		MacLib.Flags["AutoCastleCustom"]:Set(true)
-	end
-	if settings["AutoCastleCheckpoint"] and MacLib.Flags["AutoCastleCheckpoint"] then
-		MacLib.Flags["AutoCastleCheckpoint"]:Set(false)
-		task.wait(0.05)
-		MacLib.Flags["AutoCastleCheckpoint"]:Set(true)
-	end
-end)
 
 -- 🛗 Dropdown chọn tầng checkpoint
 local teleportFloors = { "25", "50", "75", "100" }
@@ -977,6 +962,53 @@ local bossOutInput = CastleSection:Input({
 
 task.delay(0.2, function()
 	bossOutInput:Set(tostring(settings["AutoOutCastleFloor"]))
+end)
+
+-- 🛠️ Auto chạy lại Castle Toggle nếu settings đang bật
+task.delay(1, function()
+    if settings["AutoCastleCustom"] then
+        task.spawn(function()
+            while settings["AutoCastleCustom"] do
+                local minute = os.date("*t").min
+                if minute >= 45 and minute <= 58 then
+                    local args = {
+                        [1] = {
+                            [1] = { ["Event"] = "CastleAction" },
+                            [2] = "\n"
+                        }
+                    }
+                    pcall(function()
+                        game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent:FireServer(unpack(args))
+                    end)
+                end
+                task.wait(3)
+            end
+        end)
+    end
+
+    if settings["AutoCastleCheckpoint"] then
+        task.spawn(function()
+            while settings["AutoCastleCheckpoint"] do
+                local minute = os.date("*t").min
+                if minute >= 45 and minute <= 58 then
+                    local args = {
+                        [1] = {
+                            [1] = {
+                                ["Check"] = true,
+                                ["Event"] = "CastleAction",
+                                ["Action"] = "Join"
+                            },
+                            [2] = "\n"
+                        }
+                    }
+                    pcall(function()
+                        game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent:FireServer(unpack(args))
+                    end)
+                end
+                task.wait(3)
+            end
+        end)
+    end
 end)
 
 -- 📦 Section duy nhất bên trái tab Misc
