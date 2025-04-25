@@ -1,3 +1,5 @@
+repeat task.wait() until game:IsLoaded() and game.Players.LocalPlayer and workspace:FindFirstChild("__Extra") and workspace:FindFirstChild("__Main")
+
 -- 🧼 Xoá GUI cũ nếu tồn tại
 local CoreGui = game:GetService("CoreGui")
 local HUI = CoreGui:FindFirstChild("HUI")
