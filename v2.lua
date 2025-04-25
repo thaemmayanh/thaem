@@ -331,26 +331,30 @@ task.spawn(function()
     end
 
     local function teleportNearMob(pos)
-	if typeof(pos) ~= "Vector3" then return end
-	local dir = rootPart.Position - pos
-	if dir.Magnitude == 0 then return end
+        if typeof(pos) ~= "Vector3" then return end
+        local dir = rootPart.Position - pos
+        if dir.Magnitude == 0 then return end
 
-	local success, direction = pcall(function() return dir.Unit end)
-	if not success then return end
+        local success, direction = pcall(function() return dir.Unit end)
+        if not success then return end
 
-	local offset = direction * 2 + Vector3.new(0, 1, 0)
-	local finalCFrame = CFrame.new(pos + offset, pos)
+        local offset = direction * 2 + Vector3.new(0, 1, 0)
+        local finalCFrame = CFrame.new(pos + offset, pos)
 
-	rootPart.Velocity = Vector3.zero
-	humanoid.AutoRotate = false
-	humanoid:ChangeState(Enum.HumanoidStateType.Physics)
-	rootPart.CFrame = finalCFrame
+        local originalGravity = workspace.Gravity
+        workspace.Gravity = 0
 
-	task.delay(0.1, function()
-		humanoid.AutoRotate = true
-		humanoid:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
-	end)
-end
+        rootPart.Velocity = Vector3.zero
+        humanoid.AutoRotate = false
+        humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+        rootPart.CFrame = finalCFrame
+
+        task.delay(0.1, function()
+            workspace.Gravity = originalGravity
+            humanoid.AutoRotate = true
+            humanoid:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
+        end)
+    end
 
     local function handleMob(model, part)
         if not part then return end
@@ -376,38 +380,26 @@ end
     end
 
     -- Main loop
-local LOBBY_PLACE_ID = 87039211657390
-local originalGravity = workspace.Gravity -- Lưu lại gravity gốc
+    local LOBBY_PLACE_ID = 87039211657390
 
-while true do
-	local isInLobby = game.PlaceId == LOBBY_PLACE_ID
-	local onlyDungeon = settings["OnlyDungeon"]
+    while true do
+        local isInLobby = game.PlaceId == LOBBY_PLACE_ID
+        local onlyDungeon = settings["OnlyDungeon"]
 
-	if settings["AutoFarm"] and (not onlyDungeon or not isInLobby) then
-		enableNoClip()
-
-		-- 🧲 Giữ gravity luôn = 0 khi đang farm
-		if workspace.Gravity ~= 0 then
-			workspace.Gravity = 0
-		end
-
-		local model, part = findNearestMob()
-		if part then
-			handleMob(model, part)
-		else
-			task.wait(0.1)
-		end
-	else
-		disableNoClip()
-
-		-- ✅ Trả lại gravity mặc định khi tắt farm
-		if workspace.Gravity ~= originalGravity then
-			workspace.Gravity = originalGravity
-		end
-
-		task.wait(0.1)
-	end
-end
+        if settings["AutoFarm"] and (not onlyDungeon or not isInLobby) then
+            enableNoClip()
+            local model, part = findNearestMob()
+            if part then
+                handleMob(model, part)
+            else
+                task.wait(0.1)
+            end
+        else
+            disableNoClip()
+            task.wait(0.1)
+        end
+    end
+end)
 
 -- 🛡 Section bên tab Main (nếu chưa có)
 local MainSection = Tabs.Main:Section({ Side = "Right" })
