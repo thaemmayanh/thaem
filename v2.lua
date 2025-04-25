@@ -234,171 +234,166 @@ MainSection:Input({
 }, "FarmDelay")
 
 task.spawn(function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local rootPart = character:WaitForChild("HumanoidRootPart")
-    local humanoid = character:WaitForChild("Humanoid")
+	local Players = game:GetService("Players")
+	local player = Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local rootPart = character:WaitForChild("HumanoidRootPart")
+	local humanoid = character:WaitForChild("Humanoid")
 
-    local enemiesRoot = workspace:WaitForChild("__Main"):WaitForChild("__Enemies")
-    local enemiesServer = enemiesRoot:WaitForChild("Server")
-    local enemiesClient = enemiesRoot:WaitForChild("Client")
+	local enemiesRoot = workspace:WaitForChild("__Main"):WaitForChild("__Enemies")
+	local enemiesServer = enemiesRoot:WaitForChild("Server")
+	local enemiesClient = enemiesRoot:WaitForChild("Client")
 
-    local scaleMap = {
-        ["Normal"] = 1,
-        ["Big"] = 2
-    }
+	local noclipConnection
+	local originalGravity = 196.2 -- ⚠ Gravity mặc định
 
-    local noclipConnection
+	local function enableNoClip()
+		if noclipConnection then return end
+		noclipConnection = game:GetService("RunService").Stepped:Connect(function()
+			if settings["AutoFarm"] and character and humanoid then
+				for _, part in ipairs(character:GetDescendants()) do
+					if part:IsA("BasePart") then
+						part.CanCollide = false
+					end
+				end
+			end
+		end)
+	end
 
-    local function enableNoClip()
-        if noclipConnection then return end
-        noclipConnection = game:GetService("RunService").Stepped:Connect(function()
-            if settings["AutoFarm"] and character and humanoid then
-                for _, part in ipairs(character:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = false
-                    end
-                end
-            end
-        end)
-    end
+	local function disableNoClip()
+		if noclipConnection then
+			noclipConnection:Disconnect()
+			noclipConnection = nil
+		end
+		for _, part in ipairs(character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.CanCollide = true
+			end
+		end
+	end
 
-    local function disableNoClip()
-        if noclipConnection then
-            noclipConnection:Disconnect()
-            noclipConnection = nil
-        end
+	local function isScaleAllowed(scale)
+		local selected = settings["FarmScales"]
+		if selected == "All" then return true end
+		if selected == "big priority" then return scale >= 1 end
+		if selected == "Normal" and scale == 1 then return true end
+		if selected == "Big" and scale == 2 then return true end
+		return false
+	end
 
-        for _, part in ipairs(character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = true
-            end
-        end
-    end
+	local function findNearestMob()
+		local nearestNormal, nearestBoss
+		local minNormalDist, minBossDist = math.huge, math.huge
+		local selected = settings["FarmScales"]
 
-    local function isScaleAllowed(scale)
-        local selected = settings["FarmScales"]
+		local function check(part)
+			local hp = part:GetAttribute("HP")
+			local scale = part:GetAttribute("Scale")
+			if not hp or hp <= 0 or not scale then return end
+			if not isScaleAllowed(scale) then return end
 
-        if selected == "All" then
-            return true
-        elseif selected == "big priority" then
-            return scale >= 1
-        elseif selected == "Normal" and scale == 1 then
-            return true
-        elseif selected == "Big" and scale == 2 then
-            return true
-        end
+			local uuid = part.Name
+			local model = enemiesClient:FindFirstChild(uuid, true)
+			local pos = (model and model:FindFirstChild("HumanoidRootPart")) and model.HumanoidRootPart.Position or part.Position
+			local dist = (pos - rootPart.Position).Magnitude
 
-        return false
-    end
+			if selected == "big priority" and scale >= 2 then
+				if dist < minBossDist then
+					minBossDist = dist
+					nearestBoss = { model = model, part = part }
+				end
+			elseif dist < minNormalDist then
+				minNormalDist = dist
+				nearestNormal = { model = model, part = part }
+			end
+		end
 
-    local function findNearestMob()
-        local nearestNormal, nearestBoss
-        local minNormalDist, minBossDist = math.huge, math.huge
-        local selected = settings["FarmScales"]
+		for _, child in ipairs(enemiesServer:GetDescendants()) do
+			if child:IsA("Part") then
+				check(child)
+			end
+		end
 
-        local function check(part)
-            local hp = part:GetAttribute("HP")
-            local scale = part:GetAttribute("Scale")
-            if not hp or hp <= 0 or not scale then return end
-            if not isScaleAllowed(scale) then return end
+		return (nearestBoss or nearestNormal or {}).model, (nearestBoss or nearestNormal or {}).part
+	end
 
-            local uuid = part.Name
-            local model = enemiesClient:FindFirstChild(uuid, true)
-            local pos = (model and model:FindFirstChild("HumanoidRootPart")) and model.HumanoidRootPart.Position or part.Position
-            local dist = (pos - rootPart.Position).Magnitude
+	local function teleportNearMob(pos)
+		if typeof(pos) ~= "Vector3" then return end
+		local dir = rootPart.Position - pos
+		if dir.Magnitude == 0 then return end
 
-            -- Ưu tiên Boss nếu chọn "Đánh Boss trước"
-            if selected == "big priority" and scale >= 2 then
-                if dist < minBossDist then
-                    minBossDist = dist
-                    nearestBoss = { model = model, part = part }
-                end
-            elseif dist < minNormalDist then
-                minNormalDist = dist
-                nearestNormal = { model = model, part = part }
-            end
-        end
+		local success, direction = pcall(function() return dir.Unit end)
+		if not success then return end
 
-        for _, child in ipairs(enemiesServer:GetDescendants()) do
-            if child:IsA("Part") then
-                check(child)
-            end
-        end
+		local offset = direction * 2 + Vector3.new(0, 1, 0)
+		local finalCFrame = CFrame.new(pos + offset, pos)
 
-        return (nearestBoss or nearestNormal or {}).model, (nearestBoss or nearestNormal or {}).part
-    end
+		rootPart.Velocity = Vector3.zero
+		humanoid.AutoRotate = false
+		humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+		rootPart.CFrame = finalCFrame
 
-    local function teleportNearMob(pos)
-        if typeof(pos) ~= "Vector3" then return end
-        local dir = rootPart.Position - pos
-        if dir.Magnitude == 0 then return end
+		task.delay(0.1, function()
+			humanoid.AutoRotate = true
+			humanoid:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
+		end)
+	end
 
-        local success, direction = pcall(function() return dir.Unit end)
-        if not success then return end
+	local function handleMob(model, part)
+		if not part then return end
 
-        local offset = direction * 2 + Vector3.new(0, 1, 0)
-        local finalCFrame = CFrame.new(pos + offset, pos)
+		local function getTargetPosition()
+			if model and model:FindFirstChild("HumanoidRootPart") then
+				return model.HumanoidRootPart.Position
+			elseif part:IsA("Part") then
+				return part.Position
+			end
+			return nil
+		end
 
-        local originalGravity = workspace.Gravity
-        workspace.Gravity = 0
+		while settings["AutoFarm"] and part:IsDescendantOf(workspace) and part:GetAttribute("Dead") ~= true do
+			local targetPos = getTargetPosition()
+			if targetPos and (targetPos - rootPart.Position).Magnitude > 7 then
+				teleportNearMob(targetPos)
+			end
+			task.wait(0.1)
+		end
 
-        rootPart.Velocity = Vector3.zero
-        humanoid.AutoRotate = false
-        humanoid:ChangeState(Enum.HumanoidStateType.Physics)
-        rootPart.CFrame = finalCFrame
+		task.wait(settings["FarmDelay"] or 0.1)
+	end
 
-        task.delay(0.1, function()
-            workspace.Gravity = originalGravity
-            humanoid.AutoRotate = true
-            humanoid:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
-        end)
-    end
+	-- Main loop
+	local LOBBY_PLACE_ID = 87039211657390
 
-    local function handleMob(model, part)
-        if not part then return end
+	while true do
+		local isInLobby = game.PlaceId == LOBBY_PLACE_ID
+		local onlyDungeon = settings["OnlyDungeon"]
 
-        local function getTargetPosition()
-            if model and model:FindFirstChild("HumanoidRootPart") then
-                return model.HumanoidRootPart.Position
-            elseif part:IsA("Part") then
-                return part.Position
-            end
-            return nil
-        end
+		if settings["AutoFarm"] and (not onlyDungeon or not isInLobby) then
+			enableNoClip()
 
-        while settings["AutoFarm"] and part:IsDescendantOf(workspace) and part:GetAttribute("Dead") ~= true do
-            local targetPos = getTargetPosition()
-            if targetPos and (targetPos - rootPart.Position).Magnitude > 7 then
-                teleportNearMob(targetPos)
-            end
-            task.wait(0.1)
-        end
+			-- ⚠ Giữ Gravity = 0 khi bật AutoFarm
+			if workspace.Gravity ~= 0 then
+				workspace.Gravity = 0
+			end
 
-        task.wait(settings["FarmDelay"] or 0.1)
-    end
+			local model, part = findNearestMob()
+			if part then
+				handleMob(model, part)
+			else
+				task.wait(0.1)
+			end
+		else
+			disableNoClip()
 
-    -- Main loop
-    local LOBBY_PLACE_ID = 87039211657390
+			-- 🔁 Trả Gravity về mặc định
+			if workspace.Gravity ~= originalGravity then
+				workspace.Gravity = originalGravity
+			end
 
-    while true do
-        local isInLobby = game.PlaceId == LOBBY_PLACE_ID
-        local onlyDungeon = settings["OnlyDungeon"]
-
-        if settings["AutoFarm"] and (not onlyDungeon or not isInLobby) then
-            enableNoClip()
-            local model, part = findNearestMob()
-            if part then
-                handleMob(model, part)
-            else
-                task.wait(0.1)
-            end
-        else
-            disableNoClip()
-            task.wait(0.1)
-        end
-    end
+			task.wait(0.1)
+		end
+	end
 end)
 
 -- 🛡 Section bên tab Main (nếu chưa có)
