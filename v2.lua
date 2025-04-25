@@ -401,6 +401,12 @@ end)
 -- 🛡 Section bên tab Main (nếu chưa có)
 local MainSection = Tabs.Main:Section({ Side = "Right" })
 
+local autoDestroy = settings["AutoDestroy"]
+local selectedModels = settings["AriseModels"]
+
+--  Danh sách tất cả model có thể chọn
+local allModels = {"JinWoo", "Pucci", "Metus", "Saitama", "Esil", "Baran", "Vulcan", "Kamish"}  -- bạn có thể thêm tùy ý
+
 -- ⚙️ Toggle: Auto Destroy
 MainSection:Toggle({
 	Name = "Auto Destroy",
