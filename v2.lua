@@ -401,9 +401,6 @@ end)
 -- 🛡 Section bên tab Main (nếu chưa có)
 local MainSection = Tabs.Main:Section({ Side = "Right" })
 
-local autoDestroy = settings["AutoDestroy"]
-local selectedModels = settings["AriseModels"]
-
 --  Danh sách tất cả model có thể chọn
 local allModels = {"JinWoo", "Pucci", "Metus", "Saitama", "Esil", "Baran", "Vulcan", "Kamish"}  -- bạn có thể thêm tùy ý
 
@@ -421,7 +418,7 @@ MainSection:Toggle({
 local ariseDropdown = MainSection:Dropdown({
 	Name = "Select Mob Arise",
 	Options = {"JinWoo", "Pucci", "Metus", "Saitama", "Esil", "Baran", "Vulcan", "Kamish"},
-	Default = settings["AriseModels"] or {},
+	Default = (typeof(settings["AriseModels"]) == "table" and settings["AriseModels"]) or {},
 	Multi = true,
 	Callback = function(optionList)
 		settings["AriseModels"] = optionList
@@ -429,12 +426,14 @@ local ariseDropdown = MainSection:Dropdown({
 	end
 }, "AriseModels")
 
--- 🛠 Force chọn lại thủ công đúng danh sách
-task.delay(0.2, function()
-	ariseDropdown:UpdateSelection(settings["AriseModels"])
+-- 🛠 Force update chọn lại sau khi UI vẽ xong hẳn
+task.spawn(function()
+	repeat task.wait() until ariseDropdown
+	ariseDropdown:UpdateSelection(settings["AriseModels"] or {})
 end)
 
 --  Xử lý Auto Destroy/Arise
+-- Luồng xử lý AutoDestroy
 task.spawn(function()
     local ReplicatedStorage = game:GetService("ReplicatedStorage")
     local Workspace = game:GetService("Workspace")
@@ -450,7 +449,6 @@ task.spawn(function()
 
     local remote = ReplicatedStorage:WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
 
-    -- Hàm tìm mob gần nhất, kết hợp Server và Client để lấy UUID chính xác
     local function getNearestMob()
         local nearestPart, nearestModel, minDist = nil, nil, math.huge
 
@@ -459,7 +457,7 @@ task.spawn(function()
             local hp = uuidPart:GetAttribute("HP")
             local scale = uuidPart:GetAttribute("Scale")
 
-            if not hp or hp > 0 then return end -- chỉ xử lý mob đã chết
+            if not hp or hp > 0 then return end
 
             local model = enemiesClient:FindFirstChild(uuid, true)
             if model and model:IsA("Model") and model:FindFirstChild("HumanoidRootPart") then
@@ -472,7 +470,6 @@ task.spawn(function()
             end
         end
 
-        -- Duyệt hết từ Server
         for _, child in pairs(enemiesServer:GetChildren()) do
             if child:IsA("Folder") then
                 for _, uuidPart in pairs(child:GetChildren()) do
@@ -488,36 +485,35 @@ task.spawn(function()
         return nearestPart, nearestModel
     end
 
-    -- Xử lý Arise hoặc Destroy
     local function handleMob()
-    local mobPart, mobModel = getNearestMob()
-    if not mobPart or not mobModel then return end
+        local mobPart, mobModel = getNearestMob()
+        if not mobPart or not mobModel then return end
 
-    local uuid = mobPart.Name
-    local modelName = mobPart:GetAttribute("Model")
+        local uuid = mobPart.Name
+        local modelName = mobPart:GetAttribute("Model")
 
-    local eventType = "EnemyDestroy"
-    if table.find(settings["AriseModels"] or {}, modelName) then
-        eventType = "EnemyCapture"
-    end
+        local eventType = "EnemyDestroy"
+        if table.find(settings["AriseModels"] or {}, modelName) then
+            eventType = "EnemyCapture"
+        end
 
-    for _ = 1, 4 do
-        local args = {
-            [1] = {
+        for _ = 1, 4 do
+            local args = {
                 [1] = {
-                    ["Event"] = eventType,
-                    ["Enemy"] = uuid
-                },
-                [2] = "\4"
+                    [1] = {
+                        ["Event"] = eventType,
+                        ["Enemy"] = uuid
+                    },
+                    [2] = "\4"
+                }
             }
-        }
-        remote:FireServer(unpack(args))
-        task.wait(0.1)
+            remote:FireServer(unpack(args))
+            task.wait(0.1)
+        end
     end
-end
 
     while true do
-        if autoDestroy then
+        if settings["AutoDestroy"] then
             pcall(handleMob)
         end
         task.wait(0.1)
@@ -986,28 +982,20 @@ end)
 -- 📦 Section duy nhất bên trái tab Misc
 local MiscSection = Tabs.Misc:Section({ Side = "Left" })
 
-local autoClicking = false
-
--- 🖱️ Toggle: AutoClick
 MiscSection:Toggle({
 	Name = "AutoClick",
 	Default = settings["AutoClick"],
 	Callback = function(val)
 		settings["AutoClick"] = val
-		autoClicking = val
 		saveSettings()
 	end
 }, "AutoClick")
 
-local autoAttackEnabled = settings["AutoAttack"]
-
--- ⚔️ Toggle: Auto Attack
 MiscSection:Toggle({
-	Name = "Auto Attack",
+	Name = "AutoAttack",
 	Default = settings["AutoAttack"],
 	Callback = function(val)
 		settings["AutoAttack"] = val
-		autoAttackEnabled = val
 		saveSettings()
 	end
 }, "AutoAttack")
@@ -1057,7 +1045,7 @@ task.spawn(function()
 
     while true do
         task.wait(0.3)
-        if autoClicking then
+        if settings["AutoClick"] then
             if Player.leaderstats:FindFirstChild("Passes") and Player.leaderstats.Passes:GetAttribute("AutoClicker") ~= true then
                 task.wait(0.2)
             end
@@ -1073,7 +1061,7 @@ task.spawn(function()
     end
 end)
 
---auto attack
+-- Luồng AutoAttack
 task.spawn(function()
 	local Players = game:GetService("Players")
 	local player = Players.LocalPlayer
@@ -1107,16 +1095,15 @@ task.spawn(function()
 	end
 
 	while true do
-		if autoAttackEnabled then
+		if settings["AutoAttack"] then
 			local target = getClosestEnemy()
 			if target then
 				local uuid = target.Name
 				local now = tick()
 
-				-- Nếu target mới → reset delay cho phép đánh ngay nếu đã đủ khoảng cách
 				if uuid ~= lastUUID then
 					lastUUID = uuid
-					lastAttackTime = now - 0.1 -- cho phép đánh ngay
+					lastAttackTime = now - 0.1
 				end
 
 				if (target.Position - rootPart.Position).Magnitude <= attackRange and (now - lastAttackTime) >= 0.1 then
@@ -1138,7 +1125,7 @@ task.spawn(function()
 				lastUUID = nil
 			end
 		end
-		task.wait() -- quét liên tục
+		task.wait()
 	end
 end)
 
@@ -1154,10 +1141,6 @@ local exchangeOptions = {
 	["1 legend = 1 rare"] = "EnchRare2",
 	["10 common = 1 rare"] = "EnchRare"
 }
-
--- ✅ Biến điều khiển
-local selectedExchange = exchangeOptions[settings["EnchantType"]] or "EnchLegendary"
-local isExchanging = false
 
 -- 🔽 Dropdown: Chọn loại đổi
 local dustDropdown = ShopSection:Dropdown({
@@ -1183,7 +1166,6 @@ ShopSection:Toggle({
 	Name = "Auto Exchange Enchant",
 	Default = settings["AutoExchangeEnchant"],
 	Callback = function(val)
-		isExchanging = val
 		settings["AutoExchangeEnchant"] = val
 		saveSettings()
 
@@ -1216,26 +1198,30 @@ ShopSection:Toggle({
 }, "AutoExchangeEnchant")
 
 -- ♻️ Vòng lặp auto exchange
+-- Luồng xử lý AutoExchangeEnchant
 task.spawn(function()
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
 	local remote = ReplicatedStorage:WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
 
 	while true do
-		if isExchanging and selectedExchange then
-			local args = {
-				[1] = {
+		if settings["AutoExchangeEnchant"] then
+			local selectedExchange = exchangeOptions[settings["EnchantType"]] or "EnchLegendary"
+			if selectedExchange then
+				local args = {
 					[1] = {
-						["Action"] = "Buy",
-						["Shop"] = "ExchangeShop",
-						["Item"] = selectedExchange,
-						["Event"] = "ItemShopAction"
-					},
-					[2] = "\n"
+						[1] = {
+							["Action"] = "Buy",
+							["Shop"] = "ExchangeShop",
+							["Item"] = selectedExchange,
+							["Event"] = "ItemShopAction"
+						},
+						[2] = "\n"
+					}
 				}
-			}
-			pcall(function()
-				remote:FireServer(unpack(args))
-			end)
+				pcall(function()
+					remote:FireServer(unpack(args))
+				end)
+			end
 		end
 		task.wait(0.5)
 	end
@@ -1389,40 +1375,6 @@ task.spawn(function()
 		timeLabel.TextColor3 = rainbow(4)
 		timeValue.TextColor3 = rainbow(5)
 	end)
-end)
-
-task.delay(1, function()
-    local function reTrigger(flag)
-        local toggle = MacLib.Flags[flag]
-        if toggle and settings[flag] then
-            toggle:Set(false)
-            task.wait(0.05)
-            toggle:Set(true)
-        end
-    end
-
-    -- 📌 Danh sách Flag thật sự có Toggle tương ứng
-    local allFlags = {
-        "AutoClick",
-        "AutoAttack",
-        "AutoLoadScript",
-        "SpecialScript",
-        "AutoSendPetFast",
-        "AutoFarm",
-        "AutoDestroy",
-        "AutoHideUI",
-        "AutoCastleCustom",
-        "AutoCastleCheckpoint",
-        "AutoBypassDungeon",
-        "AutoCheckDD",
-        "AutoAddRune",
-        "AutoExchangeEnchant",
-        "AutoBypassDungeonBlockTime",
-    }
-
-    for _, flag in ipairs(allFlags) do
-        reTrigger(flag)
-    end
 end)
 
 -- 🖱️ Tạo nút ImageButton GUI mở UI
