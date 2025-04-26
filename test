@@ -1181,7 +1181,7 @@ task.spawn(function()
     local function teleportLowServer()
         local servers = listServers()
         if servers and servers.data and #servers.data > 0 then
-            local targetServer = servers.data[1] -- server ít người nhất
+            local targetServer = servers.data[1] -- Server ít người nhất
             TeleportService:TeleportToPlaceInstance(placeId, targetServer.id, Player)
         end
     end
@@ -1195,17 +1195,29 @@ task.spawn(function()
         return false
     end
 
+    local foundEnemyBefore = false -- ✅ biến mới: đã từng phát hiện mob chưa
+
     while true do
         if settings["AutoTPLowServer"] then
-            if not checkEnemiesExist() then
-                -- Không có mob nào → đợi thêm 3s chắc chắn
-                task.wait(3)
+            if checkEnemiesExist() then
+                -- Đã phát hiện có uuid/mob → bắt đầu theo dõi
+                foundEnemyBefore = true
+            end
+
+            if foundEnemyBefore then
                 if not checkEnemiesExist() then
-                    teleportLowServer()
+                    -- Mob biến mất hết → đợi 3 giây chắc chắn
+                    task.wait(3)
+                    if not checkEnemiesExist() then
+                        teleportLowServer()
+                        foundEnemyBefore = false -- reset flag sau khi TP
+                    end
                 end
             end
+        else
+            foundEnemyBefore = false -- tắt toggle thì reset luôn
         end
-        task.wait(1) -- kiểm tra mỗi 1s
+        task.wait(1)
     end
 end)
 
