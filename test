@@ -90,6 +90,8 @@ local defaultSettings = {
     AutoLeaveDungeonEnd = false,
     OnlyDungeon = false,
     AutoBypassDungeonBlockTime = false,
+    AutoFarmRaid = false,
+    AutoTPLowServer = false,
 }
 
 for key, value in pairs(defaultSettings) do
@@ -106,9 +108,11 @@ end
 -- Tabs
 local MainTab = Window:CreateTab("Main", 124598949660449)
 local DungeonTab = Window:CreateTab("Dungeon", 106229124186030)
+local RaidTab = Window:CreateTab("Raid", 124598949660450)
 local MiscTab = Window:CreateTab("Misc", 95758233681936)
 local ShopTab = Window:CreateTab("Shop", 126309628188296)
 local TeleportTab = Window:CreateTab("Teleport", 136059427982959)
+
 
 MiscTab:CreateToggle({
     Name = "Auto Hide UI",
@@ -1088,6 +1092,120 @@ task.spawn(function()
         end
 
         task.wait(1)
+    end
+end)
+
+-- Toggle Auto Farm Raid
+RaidTab:CreateToggle({
+    Name = "Auto Farm Raid",
+    CurrentValue = settings["AutoFarmRaid"] or false,
+    Flag = "AutoFarmRaid",
+    Callback = function(val)
+        settings["AutoFarmRaid"] = val
+        saveSettings()
+    end
+})
+
+task.spawn(function()
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local rootPart = character:WaitForChild("HumanoidRootPart")
+    local enemiesServer = workspace.__Main.__Enemies.Server
+
+    local raidCFrame = CFrame.new(4851, 30, -2093)
+
+    -- Hàm tìm mob còn sống đầu tiên xuất hiện trong folder Server
+    local function findFirstMob()
+        for _, mobPart in pairs(enemiesServer:GetChildren()) do
+            if mobPart:IsA("Part") and mobPart:GetAttribute("HP") and mobPart:GetAttribute("HP") > 0 then
+                return mobPart
+            end
+        end
+        return nil
+    end
+
+    while true do
+        if settings["AutoFarmRaid"] then
+            -- Teleport về điểm Raid ban đầu nếu chưa đứng gần đó
+            if (rootPart.Position - raidCFrame.Position).Magnitude > 10 then
+                rootPart.CFrame = raidCFrame
+            end
+
+            local targetMob = findFirstMob()
+
+            if targetMob then
+                -- Teleport ngay lập tức đến mob khi xuất hiện
+                repeat
+                    if (rootPart.Position - targetMob.Position).Magnitude > 5 then
+                        rootPart.CFrame = CFrame.new(targetMob.Position + Vector3.new(0, 5, 0))
+                    end
+                    task.wait(0.1)
+                until targetMob:GetAttribute("HP") <= 0 or not settings["AutoFarmRaid"]
+            else
+                -- Đứng tại chỗ đợi UUID part load
+                task.wait(0.2)
+            end
+        else
+            task.wait(0.5)
+        end
+    end
+end)
+
+-- Toggle Auto TP LowServer
+RaidTab:CreateToggle({
+    Name = "Auto TP LowServer",
+    CurrentValue = settings["AutoTPLowServer"] or false,
+    Flag = "AutoTPLowServer",
+    Callback = function(val)
+        settings["AutoTPLowServer"] = val
+        saveSettings()
+    end
+})
+
+task.spawn(function()
+    local Players = game:GetService("Players")
+    local Player = Players.LocalPlayer
+    local HttpService = game:GetService("HttpService")
+    local TeleportService = game:GetService("TeleportService")
+    local enemiesServer = workspace.__Main.__Enemies.Server
+    local placeId = game.PlaceId
+
+    local function listServers()
+        local Api = "https://games.roblox.com/v1/games/"
+        local url = Api..placeId.."/servers/Public?sortOrder=Asc&limit=10"
+        local raw = game:HttpGet(url)
+        return HttpService:JSONDecode(raw)
+    end
+
+    local function teleportLowServer()
+        local servers = listServers()
+        if servers and servers.data and #servers.data > 0 then
+            local targetServer = servers.data[1] -- server ít người nhất
+            TeleportService:TeleportToPlaceInstance(placeId, targetServer.id, Player)
+        end
+    end
+
+    local function checkEnemiesExist()
+        for _, mob in pairs(enemiesServer:GetChildren()) do
+            if mob:IsA("Part") and mob:GetAttribute("HP") and mob:GetAttribute("HP") > 0 then
+                return true
+            end
+        end
+        return false
+    end
+
+    while true do
+        if settings["AutoTPLowServer"] then
+            if not checkEnemiesExist() then
+                -- Không có mob nào → đợi thêm 3s chắc chắn
+                task.wait(3)
+                if not checkEnemiesExist() then
+                    teleportLowServer()
+                end
+            end
+        end
+        task.wait(1) -- kiểm tra mỗi 1s
     end
 end)
 
