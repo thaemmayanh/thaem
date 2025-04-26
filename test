@@ -1140,7 +1140,7 @@ task.spawn(function()
                     if (rootPart.Position - targetMob.Position).Magnitude > 5 then
                         rootPart.CFrame = CFrame.new(targetMob.Position + Vector3.new(0, 5, 0))
                     end
-                    task.wait(0.1)
+                    task.wait(1)
                 until targetMob:GetAttribute("HP") <= 0 or not settings["AutoFarmRaid"]
             else
                 -- Đứng tại chỗ đợi UUID part load
