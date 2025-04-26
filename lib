@@ -20,7 +20,7 @@ end)
 
 --// Variables
 
-local icons = loadstring(game:HttpGet("https://raw.githubusercontent.com/thaemmayanh/thaem/refs/heads/main/icon"))()
+local icons = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/src/Icons.lua"))()
 local isStudio = RunService:IsStudio()
 local LocalPlayer = Players.LocalPlayer
 
@@ -4773,7 +4773,7 @@ function MacLib:Window(Settings)
 			label.Size = UDim2.new(0.882, 0, 0.823, 0)
 			label.TextColor3 = Color3.fromRGB(214, 159, 64)
 			label.BackgroundTransparency = 1
-			label.Text = 'Buang Hub'
+			label.Text = 'Pịa Hub'
 			label.TextScaled = true
 			label.ZIndex = 9999
 
