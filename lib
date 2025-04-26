@@ -20,7 +20,7 @@ end)
 
 --// Variables
 
-local icons = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/src/Icons.lua"))()
+local icons = loadstring(game:HttpGet("https://raw.githubusercontent.com/thaemmayanh/thaem/refs/heads/main/icon"))()
 local isStudio = RunService:IsStudio()
 local LocalPlayer = Players.LocalPlayer
 
