@@ -1140,7 +1140,7 @@ task.spawn(function()
                     if (rootPart.Position - targetMob.Position).Magnitude > 5 then
                         rootPart.CFrame = CFrame.new(targetMob.Position + Vector3.new(0, 5, 0))
                     end
-                    task.wait(1)
+                    task.wait(1.5)
                 until targetMob:GetAttribute("HP") <= 0 or not settings["AutoFarmRaid"]
             else
                 -- Đứng tại chỗ đợi UUID part load
@@ -1151,6 +1151,17 @@ task.spawn(function()
         end
     end
 end)
+
+-- Toggle Auto TP LowServer
+RaidTab:CreateToggle({
+    Name = "Auto TP LowServer",
+    CurrentValue = settings["AutoTPLowServer"] or false,
+    Flag = "AutoTPLowServer",
+    Callback = function(val)
+        settings["AutoTPLowServer"] = val
+        saveSettings()
+    end
+})
 
 -- Toggle Auto TP LowServer
 RaidTab:CreateToggle({
@@ -1181,7 +1192,7 @@ task.spawn(function()
     local function teleportLowServer()
         local servers = listServers()
         if servers and servers.data and #servers.data > 0 then
-            local targetServer = servers.data[1] -- Server ít người nhất
+            local targetServer = servers.data[1] -- server ít người nhất
             TeleportService:TeleportToPlaceInstance(placeId, targetServer.id, Player)
         end
     end
@@ -1195,29 +1206,17 @@ task.spawn(function()
         return false
     end
 
-    local foundEnemyBefore = false -- ✅ biến mới: đã từng phát hiện mob chưa
-
     while true do
         if settings["AutoTPLowServer"] then
-            if checkEnemiesExist() then
-                -- Đã phát hiện có uuid/mob → bắt đầu theo dõi
-                foundEnemyBefore = true
-            end
-
-            if foundEnemyBefore then
+            if not checkEnemiesExist() then
+                -- Không có mob nào → đợi thêm 3s chắc chắn
+                task.wait(2)
                 if not checkEnemiesExist() then
-                    -- Mob biến mất hết → đợi 3 giây chắc chắn
-                    task.wait(3)
-                    if not checkEnemiesExist() then
-                        teleportLowServer()
-                        foundEnemyBefore = false -- reset flag sau khi TP
-                    end
+                    teleportLowServer()
                 end
             end
-        else
-            foundEnemyBefore = false -- tắt toggle thì reset luôn
         end
-        task.wait(1)
+        task.wait(1) -- kiểm tra mỗi 1s
     end
 end)
 
