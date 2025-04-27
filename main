@@ -1174,9 +1174,11 @@ task.spawn(function()
     local enemiesServer = workspace.__Main.__Enemies.Server
     local placeId = game.PlaceId
 
+    local modelList = {"WBoss", "WBoss2", "WElf2"}
+
     local function listServers()
         local Api = "https://games.roblox.com/v1/games/"
-        local url = Api..placeId.."/servers/Public?sortOrder=Asc&limit=10"
+        local url = Api .. placeId .. "/servers/Public?sortOrder=Asc&limit=10"
         local raw = game:HttpGet(url)
         return HttpService:JSONDecode(raw)
     end
@@ -1184,31 +1186,121 @@ task.spawn(function()
     local function teleportLowServer()
         local servers = listServers()
         if servers and servers.data and #servers.data > 0 then
-            local targetServer = servers.data[1] -- server ít người nhất
+            local targetServer = servers.data[1]
             TeleportService:TeleportToPlaceInstance(placeId, targetServer.id, Player)
         end
     end
 
-    local function checkEnemiesExist()
-        for _, mob in pairs(enemiesServer:GetChildren()) do
+    local function findMobByModels()
+        for _, mob in ipairs(enemiesServer:GetChildren()) do
             if mob:IsA("Part") and mob:GetAttribute("HP") and mob:GetAttribute("HP") > 0 then
-                return true
+                local modelName = mob:GetAttribute("Model")
+                if modelName and table.find(modelList, modelName) then
+                    return mob, modelName
+                end
             end
         end
-        return false
+        return nil, nil
+    end
+
+    local function getCurrentMinute()
+        local t = os.date("*t")
+        return t.min
+    end
+
+    local function isRaidWaitingTime()
+        local min = getCurrentMinute()
+        return (min >= 40 and min <= 41) or (min >= 10 and min <= 11)
+    end
+
+    local function isAfterRaidStart()
+        local min = getCurrentMinute()
+        return (min >= 42 and min <= 59) or (min >= 12 and min <= 39)
     end
 
     while true do
         if settings["AutoTPLowServer"] then
-            if not checkEnemiesExist() then
-                -- Không có mob nào → đợi thêm 3s chắc chắn
-                task.wait(2)
-                if not checkEnemiesExist() then
+            local mob, modelName = findMobByModels()
+
+            if isRaidWaitingTime() then
+                -- Khung giờ 40-41 / 10-11 -> chờ WBoss2 xuất hiện
+                if modelName == "WBoss2" then
+                    -- Phát hiện WBoss2 → đợi chết
+                    while mob and mob:GetAttribute("HP") > 0 and settings["AutoTPLowServer"] do
+                        task.wait(1)
+                        mob, modelName = findMobByModels()
+                    end
+                    task.wait(2)
+                    teleportLowServer()
+                else
+                    -- Không có WBoss2 → không TP, chỉ đợi
+                    task.wait(1)
+                end
+
+            elseif isAfterRaidStart() then
+                -- Sau 42p hoặc 12p
+
+                if modelName == "WBoss2" then
+                    -- Nếu thấy WBoss2, đợi HP về 0
+                    while mob and mob:GetAttribute("HP") > 0 and settings["AutoTPLowServer"] do
+                        task.wait(1)
+                        mob, modelName = findMobByModels()
+                    end
+                    task.wait(2)
+                    teleportLowServer()
+
+                elseif modelName == "WElf2" then
+                    -- Nếu thấy WElf2 → đợi HP về 0 rồi TP
+                    while mob and mob:GetAttribute("HP") > 0 and settings["AutoTPLowServer"] do
+                        task.wait(1)
+                        mob, modelName = findMobByModels()
+                    end
+                    task.wait(2)
+                    teleportLowServer()
+
+                elseif modelName == "WBoss" then
+                    -- Nếu gặp WBoss → đợi 10s xem WBoss2 spawn hay không
+                    local start = tick()
+                    local foundWBoss2 = false
+
+                    repeat
+                        task.wait(0.5)
+                        local mobCheck, modelCheck = findMobByModels()
+                        if modelCheck == "WBoss2" then
+                            foundWBoss2 = true
+                            mob = mobCheck
+                            break
+                        end
+                    until tick() - start > 10 or not settings["AutoTPLowServer"]
+
+                    if foundWBoss2 then
+                        -- WBoss2 spawn → đợi HP WBoss2 về 0
+                        while mob and mob:GetAttribute("HP") > 0 and settings["AutoTPLowServer"] do
+                            task.wait(1)
+                            mob, modelName = findMobByModels()
+                        end
+                        task.wait(2)
+                        teleportLowServer()
+                    else
+                        -- Không có WBoss2 sau 10s → TP
+                        teleportLowServer()
+                    end
+
+                else
+                    -- Không có mob đúng → TP ngay
                     teleportLowServer()
                 end
+
+            else
+                -- Các thời điểm khác → TP liên tục nếu không thấy mob
+                if not mob then
+                    teleportLowServer()
+                end
+                task.wait(1)
             end
+        else
+            task.wait(1)
         end
-        task.wait(1) -- kiểm tra mỗi 1s
     end
 end)
 
