@@ -1115,11 +1115,14 @@ task.spawn(function()
 
     local raidCFrame = CFrame.new(4851, 30, -2093)
 
-    -- Hàm tìm mob còn sống đầu tiên xuất hiện trong folder Server
+    -- Hàm tìm mob còn sống và đúng Model
     local function findFirstMob()
         for _, mobPart in pairs(enemiesServer:GetChildren()) do
             if mobPart:IsA("Part") and mobPart:GetAttribute("HP") and mobPart:GetAttribute("HP") > 0 then
-                return mobPart
+                local modelName = mobPart:GetAttribute("Model")
+                if modelName == "WElf2" or modelName == "WBoss" or modelName == "WBoss2" then
+                    return mobPart
+                end
             end
         end
         return nil
