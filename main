@@ -1163,17 +1163,6 @@ RaidTab:CreateToggle({
     end
 })
 
--- Toggle Auto TP LowServer
-RaidTab:CreateToggle({
-    Name = "Auto TP LowServer",
-    CurrentValue = settings["AutoTPLowServer"] or false,
-    Flag = "AutoTPLowServer",
-    Callback = function(val)
-        settings["AutoTPLowServer"] = val
-        saveSettings()
-    end
-})
-
 task.spawn(function()
     local Players = game:GetService("Players")
     local Player = Players.LocalPlayer
