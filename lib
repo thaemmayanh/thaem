@@ -3594,6 +3594,7 @@ function MacLib:Window(Settings)
 	baseUIStroke.Parent = base
 
 	local sidebar = Instance.new("Frame")
+        sidebar.Size = UDim2.new(Settings.SidebarSize or 0.325, 0, 1, 0)
 	sidebar.Name = "Sidebar"
 	sidebar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	sidebar.BackgroundTransparency = 1
@@ -3889,15 +3890,22 @@ function MacLib:Window(Settings)
 
 	sidebar.Parent = base
 
-	local content = Instance.new("Frame")
-	content.Name = "Content"
-	content.AnchorPoint = Vector2.new(1, 0)
-	content.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	content.BackgroundTransparency = 1
-	content.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	content.BorderSizePixel = 0
-	content.Position = UDim2.fromScale(1, 4.69e-08)
-	content.Size = UDim2.fromScale(0.675, 1)
+        local content = Instance.new("Frame")
+        content.Name = "Content"
+        content.AnchorPoint = Vector2.new(1, 0)
+        content.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        content.BackgroundTransparency = 1
+        content.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        content.BorderSizePixel = 0
+        content.Position = UDim2.fromScale(1, 0)
+        content.Size = UDim2.fromScale(1 - (Settings.SidebarSize or 0.325), 1) -- tự động trừ sidebar
+
+        -- Thêm scale UI bên trong content
+        local contentScale = Instance.new("UIScale")
+        contentScale.Scale = Settings.ContentScale or 1
+        contentScale.Parent = content
+
+
 
 	MacLib.content = content
 
