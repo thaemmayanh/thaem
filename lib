@@ -3503,13 +3503,15 @@ end
 
 function MacLib:Window(Settings)
 	Settings = Defaults({
-		Title = "Buang Hub",
+		Title = "Pịa Hub",
 		Subtitle = "",
-		Size = UDim2.fromOffset(868, 650),
-		Scale = 1,
-		AcrylicBlur = false,
-		Keybind = Enum.KeyCode.RightControl,
-		ShowUserInfo = false
+                Size = UDim2.fromOffset(868, 650),
+                Scale = 1,
+                AcrylicBlur = false,
+                Keybind = Enum.KeyCode.RightControl,
+                ShowUserInfo = false,
+                SidebarSize = 0.325, -- Mặc định
+                ContentScale = 1
 	}, Settings)
 
 	local WindowFunctions = {}
