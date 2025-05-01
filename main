@@ -605,7 +605,7 @@ local function createAndStartDungeon()
                 ["Event"] = "DungeonAction",
                 ["Action"] = "BuyTicket"
             },
-            [2] = "\n"
+            [2] = "\011"
         }
     }
     bridge:FireServer(unpack(args1))
@@ -618,7 +618,7 @@ local function createAndStartDungeon()
                 ["Event"] = "DungeonAction",
                 ["Action"] = "Create"
             },
-            [2] = "\n"
+            [2] = "\011"
         }
     }
     bridge:FireServer(unpack(args2))
@@ -659,7 +659,7 @@ if settings["AutoAddRune"] then
                                 ["Event"] = "DungeonAction",
                                 ["Item"] = id
                             },
-                            [2] = "\n"
+                            [2] = "\011"
                         }
                     }
                     bridge:FireServer(unpack(addArgs))
@@ -681,7 +681,7 @@ end
                 ["Event"] = "DungeonAction",
                 ["Action"] = "Start"
             },
-            [2] = "\n"
+            [2] = "\011"
         }
     }
     bridge:FireServer(unpack(args3))
@@ -696,7 +696,7 @@ end
                     ["Event"] = "DungeonAction",
                     ["Action"] = "Leave"
                 },
-                [2] = "\n"
+                [2] = "\011"
             }
         }
         for i = 1, 3 do
