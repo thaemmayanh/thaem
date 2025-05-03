@@ -508,7 +508,7 @@ task.spawn(function()
                     ["Event"] = eventType,
                     ["Enemy"] = uuid
                 },
-                [2] = "\005"
+                [2] = "\4"
             }
         }
         remote:FireServer(unpack(args))
@@ -627,7 +627,14 @@ local function createAndStartDungeon()
     -- ⚡️ Auto Add Rune nếu bật
 if settings["AutoAddRune"] then
     local runeDisplayNames = {
-        ["DgDanRune"] = "DanDaDan Rune"
+        ["DgBCRune"] = "Black Clover",
+        ["DgBleachRune"] = "Bleach",
+        ["DgOPRune"] = "One Piece",
+        ["DgDbRune"] = "Dragon Ball",
+        ["DgChainsawRune"] = "Chainsaw Man",
+        ["DgNarutoRune"] = "Naruto",
+        ["DgSoloRune"] = "Solo Leveling",
+        ["DgJojoRune"] = "JoJo",
         ["DgOPMRune"] = "OPM Rune",
         ["DgURankUpRune"] = "Ultimate Rank UP",
         ["DgRankDownRune"] = "Rank Down Rune",
@@ -781,7 +788,14 @@ task.spawn(function()
 end)
 
 local runeDisplayNames = {
-    ["DgDanRune"] = "DanDaDan Rune"
+    ["DgBCRune"] = "Black Clover",
+    ["DgBleachRune"] = "Bleach",
+    ["DgOPRune"] = "One Piece",
+    ["DgDbRune"] = "Dragon Ball",
+    ["DgChainsawRune"] = "Chainsaw Man",
+    ["DgNarutoRune"] = "Naruto",
+    ["DgSoloRune"] = "Solo Leveling",
+    ["DgJojoRune"] = "JoJo",
     ["DgOPMRune"] = "OPM Rune",
     ["DgURankUpRune"] = "Ultimate Rank UP",
     ["DgRankDownRune"] = "Rank Down Rune",
@@ -852,15 +866,10 @@ local castleJoinToggle = DungeonTab:CreateToggle({
                 while settings["AutoCastleCustom"] do
                     local minute = os.date("*t").min
                     if minute >= 45 and minute <= 58 then
-                        -- only args updated as requested:
                         local args = {
-                            {
-                                {
-                                    Check = false,
-                                    Event = "CastleAction",
-                                    Action = "Join"
-                                },
-                                "\011"
+                            [1] = {
+                                [1] = { ["Event"] = "CastleAction" },
+                                [2] = "\n"
                             }
                         }
                         pcall(function()
@@ -904,13 +913,13 @@ local castleCheckpointToggle = DungeonTab:CreateToggle({
                     local minute = os.date("*t").min
                     if minute >= 45 and minute <= 58 then
                         local args = {
-                            {
-                                {
-                                    Check = true,
-                                    Event = "CastleAction",
-                                    Action = "Join"
+                            [1] = {
+                                [1] = {
+                                    ["Check"] = true,
+                                    ["Event"] = "CastleAction",
+                                    ["Action"] = "Join"
                                 },
-                                "\011"
+                                [2] = "\n"
                             }
                         }
                         pcall(function()
