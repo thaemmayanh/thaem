@@ -508,7 +508,7 @@ task.spawn(function()
                     ["Event"] = eventType,
                     ["Enemy"] = uuid
                 },
-                [2] = "\4"
+                [2] = "\005"
             }
         }
         remote:FireServer(unpack(args))
@@ -853,13 +853,20 @@ local castleJoinToggle = DungeonTab:CreateToggle({
                     local minute = os.date("*t").min
                     if minute >= 45 and minute <= 58 then
                         local args = {
-                            [1] = {
-                                [1] = { ["Event"] = "CastleAction" },
-                                [2] = "\n"
+                            {
+                                {
+                                    Check = false,
+                                    Event = "CastleAction",
+                                    Action = "Join"
+                                },
+                                "\011"
                             }
                         }
                         pcall(function()
-                            ReplicatedStorage.BridgeNet2.dataRemoteEvent:FireServer(unpack(args))
+                            game:GetService("ReplicatedStorage")
+                                :WaitForChild("BridgeNet2")
+                                :WaitForChild("dataRemoteEvent")
+                                :FireServer(unpack(args))
                         end)
                     end
                     task.wait(3)
@@ -905,7 +912,7 @@ local castleCheckpointToggle = DungeonTab:CreateToggle({
                                     ["Event"] = "CastleAction",
                                     ["Action"] = "Join"
                                 },
-                                [2] = "\n"
+                                [2] = "\011"
                             }
                         }
                         pcall(function()
