@@ -627,14 +627,7 @@ local function createAndStartDungeon()
     -- ⚡️ Auto Add Rune nếu bật
 if settings["AutoAddRune"] then
     local runeDisplayNames = {
-        ["DgBCRune"] = "Black Clover",
-        ["DgBleachRune"] = "Bleach",
-        ["DgOPRune"] = "One Piece",
-        ["DgDbRune"] = "Dragon Ball",
-        ["DgChainsawRune"] = "Chainsaw Man",
-        ["DgNarutoRune"] = "Naruto",
-        ["DgSoloRune"] = "Solo Leveling",
-        ["DgJojoRune"] = "JoJo",
+        ["DgDanRune"] = "DanDaDan Rune"
         ["DgOPMRune"] = "OPM Rune",
         ["DgURankUpRune"] = "Ultimate Rank UP",
         ["DgRankDownRune"] = "Rank Down Rune",
@@ -788,14 +781,7 @@ task.spawn(function()
 end)
 
 local runeDisplayNames = {
-    ["DgBCRune"] = "Black Clover",
-    ["DgBleachRune"] = "Bleach",
-    ["DgOPRune"] = "One Piece",
-    ["DgDbRune"] = "Dragon Ball",
-    ["DgChainsawRune"] = "Chainsaw Man",
-    ["DgNarutoRune"] = "Naruto",
-    ["DgSoloRune"] = "Solo Leveling",
-    ["DgJojoRune"] = "JoJo",
+    ["DgDanRune"] = "DanDaDan Rune"
     ["DgOPMRune"] = "OPM Rune",
     ["DgURankUpRune"] = "Ultimate Rank UP",
     ["DgRankDownRune"] = "Rank Down Rune",
