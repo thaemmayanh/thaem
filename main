@@ -370,13 +370,17 @@ end
             return nil
         end
 
-        while settings["AutoFarm"] and part:IsDescendantOf(workspace) and part:GetAttribute("Dead") ~= true do
-            local targetPos = getTargetPosition()
-            if targetPos and (targetPos - rootPart.Position).Magnitude > 7 then
-                teleportNearMob(targetPos)
-            end
-            task.wait(0.1)
-        end
+        if settings["AutoFarm"] and part:IsDescendantOf(workspace) and part:GetAttribute("Dead") ~= true then
+    local targetPos = getTargetPosition()
+    if targetPos and (targetPos - rootPart.Position).Magnitude > 7 then
+        teleportNearMob(targetPos)
+    end
+
+    -- Đợi quái chết
+    repeat
+        task.wait(0.2)
+    until part:GetAttribute("Dead") == true
+end
 
         task.wait(settings["FarmDelay"] or 0.1)
     end
@@ -408,7 +412,7 @@ local autoDestroy = settings["AutoDestroy"]
 local selectedModels = settings["AriseModels"]
 
 --  Danh sách tất cả model có thể chọn
-local allModels = {"JinWoo", "Pucci", "Metus", "Saitama", "Esil", "Baran", "Vulcan", "Kamish"}  -- bạn có thể thêm tùy ý
+local allModels = {"JinWoo", "Okarun", "Metus", "Statue", "Esil", "Baran", "Vulcan", "Kamish"}  -- bạn có thể thêm tùy ý
 
 -- 🗡 Toggle: Auto Destroy
 MainTab:CreateToggle({
@@ -503,13 +507,13 @@ task.spawn(function()
 
     for _ = 1, 4 do
         local args = {
-            [1] = {
-                [1] = {
-                    ["Event"] = eventType,
-                    ["Enemy"] = uuid
-                },
-                [2] = "\4"
-            }
+	    {
+		{
+			Event = eventType,
+			Enemy = uuid
+		},
+		"\005"
+	    }
         }
         remote:FireServer(unpack(args))
         task.wait(0.1)
@@ -1572,6 +1576,7 @@ local teleportData = {
     {Name = "JoJo", Position = CFrame.new(4816.31641, 30.4423409, -120.22998)},
     {Name = "DB", Position = CFrame.new(-6295.89209, 24.6981049, -73.7149353, 0, 0, 1, 0, 1, -0, -1, 0, 0)},
     {Name = "OPM", Position = CFrame.new(5994.5376, 171.666214, 4863.9458, 0.776914835, -0, -0.62960577, 0, 1, -0, 0.62960577, 0, 0.776914835)},
+    {Name = "DanDaDan", Position = CFrame.new(-4374.35352, 19.4620514, 5588.17773, -0.923002124, 8.06914073e-08, 0.384794801, 1.21062612e-07, 1, 8.06914073e-08, -0.384794801, 1.21062612e-07, -0.923002124)},
     {Name = "GuildHall", Position = CFrame.new(289.015015, 31.8532162, 157.246201, 1, 0, 0, 0, 1, 0, 0, 0, 1)},
 }
 
