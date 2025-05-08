@@ -428,7 +428,7 @@ MainTab:CreateToggle({
 
 MainTab:CreateDropdown({
 	Name = "select mob arise",
-	Options = {"JinWoo", "Pucci", "Metus", "Saitama", "Esil", "Baran", "Vulcan", "Kamish"},
+	Options = {"JinWoo", "Okarun", "Metus", "Statue", "Esil", "Baran", "Vulcan", "Kamish"},
 	CurrentOption = settings["AriseModels"] or {},
 	MultipleOptions = true, -- Bật multi-select
 	Flag = "AriseModels",
