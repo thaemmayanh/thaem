@@ -288,7 +288,7 @@ task.spawn(function()
     local function isScaleAllowed(scale)
         local selected = settings["FarmScales"] or {}
         if table.find(selected, "All") then return true end
-        if table.find(selected, "Đánh Boss trước") then return scale >= 1 end
+        if table.find(selected, "big priority") then return scale >= 1 end
         local rounded = math.floor((scale or 0) + 0.01)
         for _, name in ipairs(selected) do
             if scaleMap[name] == rounded then return true end
@@ -312,7 +312,7 @@ task.spawn(function()
             local pos = (model and model:FindFirstChild("HumanoidRootPart")) and model.HumanoidRootPart.Position or part.Position
             local dist = (pos - rootPart.Position).Magnitude
 
-            if scale >= 2 and table.find(selected, "Đánh Boss trước") then
+            if scale >= 2 and table.find(selected, "big priority") then
                 if dist < minBossDist then
                     minBossDist = dist
                     nearestBoss = {model = model, part = part}
