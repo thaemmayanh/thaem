@@ -1404,7 +1404,7 @@ task.spawn(function()
 								["Event"] = "PunchAttack",
 								["Enemy"] = uuid
 							},
-							[2] = "\4"
+							[2] = "\005"
 						}
 					}
 					pcall(function()
