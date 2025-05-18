@@ -633,6 +633,9 @@ if settings["AutoAddRune"] then
     local runeDisplayNames = {
         ["DgOPMRune"] = "OPM Rune",
         ["DgDanRune"] = "Dandadan Rune",
+        ["DgSoloRune"] = "Solo Rune",
+        ["DgSoloRune2"] = "Hunter Rune",
+        ["DgDoubleDungeonRune"] = "dd rune",
         ["DgURankUpRune"] = "Ultimate Rank UP",
         ["DgRankDownRune"] = "Rank Down Rune",
         ["DgHealthRune"] = "Heal Rune",
@@ -786,7 +789,9 @@ end)
 
 local runeDisplayNames = {
     ["DgOPMRune"] = "OPM Rune",
-    ["DgDanRune"] = "Dandadan Rune",
+    ["DgSoloRune"] = "Solo Rune",
+    ["DgSoloRune2"] = "Hunter Rune",
+    ["DgDoubleDungeonRune"] = "dd rune",
     ["DgURankUpRune"] = "Ultimate Rank UP",
     ["DgRankDownRune"] = "Rank Down Rune",
     ["DgHealthRune"] = "Heal Rune",
