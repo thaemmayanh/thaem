@@ -789,6 +789,7 @@ end)
 
 local runeDisplayNames = {
     ["DgOPMRune"] = "OPM Rune",
+    ["DgDanRune"] = "Dandadan Rune",
     ["DgSoloRune"] = "Solo Rune",
     ["DgSoloRune2"] = "Hunter Rune",
     ["DgDoubleDungeonRune"] = "dd rune",
@@ -800,7 +801,6 @@ local runeDisplayNames = {
     ["DgTimeRune"] = "Time Rune",
     ["DgMoreRoomRune"] = "More Room Rune"
 }
-
 
 local runeDropdownOptions = {"None"}
 for id, display in pairs(runeDisplayNames) do
